@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Escape room</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            font-family: Monospace;
+            background-color: #000;
+            color: #fff;
+            margin: 0px;
+            overflow: hidden;
+        }
+        #info {
+            color: #fff;
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            z-index: 100;
+            display:block;
+        }
+        input{
+            position: fixed; 
+            left: 20px; 
+            top: 10px; 
+            border-radius: 30%;            
+            border: none;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            background-color: rgb(13, 121, 221);
+        }
+        #info a, .button { color: #f00; font-weight: bold; text-decoration: underline; cursor: pointer }
+    </style>
+</head>
+
+<body>
+    <a href="../index.html"><input type="Button" value="Back" ></a>  
+<div id="info">
+
+</div>
+
+<script src="three.js"></script>
+
+<script src="FirstPersonControls.js"></script>
+<script src="ReusableRay.js"></script>
+
+
+<script src="ReusableRay.js"></script>
+
+<script src="DDSLoader.js"></script>
+<script src="OBJLoader.js"></script>
+<script src="MTLLoader.js"></script>
+
+<script>
+
+    var end=false;
+
+    var min=00;
+
+    var raycaster = new THREE.Raycaster();
+    var mouse = new THREE.Vector2();
+    var clickE = false;
+
+    var steker=false;
+
+    var x_rac=0;
+    var axe_st= 300;
+    var axe_st2= -90;
+    var axe_st3= -530;
+    var axe_st_h= 300;
+    var axe_st2_h= -90;
+    var axe_st3_h= -530;
+
+    var key_pobrano=false;
+    var click_dol_key;
+    var click_on_bigBox=false;
+
+    var stek_m=false;
+    var stek_r=false;
+    var stek_z=false;
+    var platno=false;
+
+    var modra=0;
+    var rdeca=0;
+    var zelena=0;
+
+    var dvig_vrat=false;
+    var vrata_pos = -500;
+
+    var dvig_vrat2=false;
+    var vrata_pos2 = -500;
+
+    var axe_pobrano=false;
+    var click_dol;
+
+
+    var clickKey=false;
+
+    var axe_inv=false;
+    var clickHelp=false;
+    var helpRise=false;
+    var test=false;
+
+    var clock = new THREE.Clock();
+    var delta = clock.getDelta(); // seconds.
+    var container;
+
+    var camera, scene, renderer;
+
+    var mouseX = 0, mouseY = 0;
+    var mousex2=0;
+    var mousey2=0;
+
+    var windowHalfX = window.innerWidth / 2;
+    var windowHalfY = window.innerHeight / 2;
+
+    var walls;
+    var wallWidth = 1000;
+    init();
+
+
+
+    function init() {
+
+        scene = new THREE.Scene();
+
+        container = document.createElement( 'div' );
+        document.body.appendChild( container );
+
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
+        camera.position.x = 0;
+        camera.position.y = -wallWidth/2;
+        camera.position.z = 0;
+        //camera.lookAt(new THREE.Vector3(-1, -1, -1));
+
+        var camControls = new THREE.FirstPersonControls( camera, scene );
+
+        camControls.lookSpeed = 0.5;
+        camControls.movementSpeed = 1000;
+        camControls.lookVertical = true;
+        camControls.constrainVertical = true;
+        camControls.verticalMin = 0.7;
+        camControls.verticalMax = 2.2;
+        camControls.lon = -90;
+        camControls.lat = -5;
+
+
+        // scene
+
+        var ambient = new THREE.AmbientLight( 0x404040, 0.2 );
+        scene.add( ambient );
+
+        /*var directionalLight1 = new THREE.DirectionalLight( 0xffeedd );
+         directionalLight1.position.set( 0, 0, 1 );
+         scene.add( directionalLight1 );*/
+
+        var targetObject2 = new THREE.Object3D( 1, 1, 1 );
+        scene.add(targetObject2);
+        targetObject2.position.set(0, -1050, -2500);
+        var sphere3 = new THREE.SphereGeometry( 50, 40, 40 );
+        var directionalLight1 = new THREE.DirectionalLight( 0xfffff0, 0.5 );
+        directionalLight1.position.set( 0, 0, -3700 );
+        scene.add( directionalLight1 );
+        directionalLight1.target = targetObject2;
+        directionalLight1.add( new THREE.Mesh( sphere3, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
+        scene.add( directionalLight1 );
+
+        var sphere2 = new THREE.SphereGeometry( 12, 40, 40 );
+
+        // LUČ V PRVI SOBI
+        var light = new THREE.PointLight( 0xffffff, 4.5, 0.1, 0.5 );
+        light.position.set(-35, -110, 0); //-35,-110,0
+        light.name="luc_v_prvi_sobi";
+        scene.add( light );
+
+        var light4 = new THREE.PointLight( 0xffffff, 4, 1500 );
+        light4.position.set(-500, -500, -1500);
+        //scene.add( light4 );
+
+        scene.fog = new THREE.FogExp2( 0xffffff, 0.00045 );
+
+        // White directional light at half intensity shining from the top.
+        var directionalLight = new THREE.DirectionalLight( 0x0000FF, 5 );
+        directionalLight.position.set(-660, 500, -1530);
+        directionalLight.target.position.set( 100, 1.2, 200 );
+        //scene.add( directionalLight );
+
+        var sphere = new THREE.SphereGeometry( 5, 32, 32 );
+        var light3 = new THREE.PointLight( 0xffffff, 100, 2000, 2 );
+        light3.position.set(-552, -800, -1515);
+        light3.power = 10;
+        light3.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
+        light3.name="una_mala";
+        scene.add( light3 );
+
+
+        var targetObject = new THREE.Object3D( 1, 1, 1 );
+        scene.add(targetObject);
+        targetObject.position.set(1000, -425, -1525);
+
+
+        var spotLight = new THREE.SpotLight( 0xffffff, 5, 4000, Math.PI/6, 0, 1 );
+        spotLight.position.set(-572, -812, -1515);
+        spotLight.castShadow = true;
+        spotLight.shadow.mapSize.width = 1024;
+        spotLight.shadow.mapSize.height = 1024;
+        spotLight.shadow.camera.near = 50;
+        spotLight.shadow.camera.far = 2000;
+        spotLight.shadow.camera.fov = 30;
+        spotLight.target = targetObject;
+        spotLight.name="spotligt";
+        scene.add( spotLight );
+
+        var text4 = document.createElement('div');
+        text4.id="text_start";
+        text4.style.position = 'absolute';
+        text4.style.width = 100;
+        text4.style.height = 100;
+        text4.style.top = 200 + 'px';
+        text4.style.left = 600 + 'px';
+        text4.style.fontSize="50px";
+        document.body.appendChild(text4);
+        camControls.freeze = true;
+        text4.innerHTML = "POBEGNI IZ SOBE";
+
+        setTimeout(function(){camControls.freeze = true;text4.innerHTML = "3";
+
+        }, 1000);
+
+        setTimeout(function(){camControls.freeze = true;text4.innerHTML = "2";
+
+        }, 2000);
+
+        setTimeout(function(){camControls.freeze = true;text4.innerHTML = "1";
+
+        }, 3000);
+
+        setTimeout(function(){camControls.freeze = false;text4.innerHTML = "START";
+
+            clock.start();
+
+        }, 4000);
+
+        setTimeout(function(){text4.innerHTML = "";
+
+        }, 5000);
+
+        var manager = new THREE.LoadingManager();
+        var onProgress = function ( xhr ) {
+            if ( xhr.lengthComputable ) {
+                var percentComplete = xhr.loaded / xhr.total * 100;
+                console.log( Math.round(percentComplete, 2) + '% downloaded' );
+            }
+        };
+
+        var onError = function ( xhr ) { };
+// SEKIRA
+        THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+
+        var mtlLoader = new THREE.MTLLoader();
+        mtlLoader.setBaseUrl('axe-obj/');
+        mtlLoader.setPath('axe-obj/');
+        mtlLoader.load( 'Axe.mtl', function( materials ) {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials( materials );
+            objLoader.setPath( 'axe-obj/' );
+            objLoader.load('Axe.obj', function ( object ) {
+                object.position.set(5000, 5000, 5000);
+                object.scale.x = 30;
+                object.scale.y = 30;
+                object.scale.z = 30;
+                object.rotation.x = Math.PI;
+                object.rotation.y = Math.PI / 4;
+                object.children[0].name="sekira_na_tleh";
+                object.children[1].name="sekira_na_tleh";
+                object.name="sek_na_tl";
+                scene.add(object);
+            }, onProgress, onError );
+        });
+// MIZA
+
+        mtlLoader.setBaseUrl('obj/');
+        mtlLoader.setPath('obj/');
+        mtlLoader.load( 'Wooden_Table_1.mtl', function( materials ) {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials( materials );
+            objLoader.setPath( 'obj/' );
+            objLoader.load('Wooden Table 1.obj', function ( object ) {
+                object.position.set(-700, -999, -1300);
+                object.scale.x = 2.5;
+                object.scale.y = 2.5;
+                object.scale.z = 2.5;
+                //object.rotation.x = Math.PI;
+                object.rotation.y = Math.PI / 2;
+                scene.add(object);
+            }, onProgress, onError );
+        });
+// PROJEKTOR
+
+        mtlLoader.setBaseUrl('obj/');
+        mtlLoader.setPath('obj/');
+        mtlLoader.load( 'projektor.mtl', function( materials ) {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials( materials );
+            objLoader.setPath( 'obj/' );
+            objLoader.load('projektor.obj', function ( object ) {
+                object.position.set(-550, -812, -1525);
+                object.scale.x = 2.5;
+                object.scale.y = 2.5;
+                object.scale.z = 2.5;
+                //object.rotation.x = Math.PI;
+                object.rotation.y = - Math.PI / 2;
+                object.name="projektor";
+                scene.add(object);
+            }, onProgress, onError );
+        });
+
+// STIKALO
+
+        mtlLoader.setBaseUrl('obj/');
+        mtlLoader.setPath('obj/');
+        mtlLoader.load( 'lightswitch.mtl', function( materials ) {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials( materials );
+            objLoader.setPath( 'obj/' );
+            objLoader.load('lightswitch.obj', function ( object ) {
+                object.position.set(0, -600, 480);
+                object.scale.x = 2;
+                object.scale.y = 2;
+                object.scale.z = 2;
+                object.rotation.z = Math.PI / 2;
+                object.rotation.y = - Math.PI / 2;
+                object.children[0].name = "steker_c";
+                object.name="steker";
+                scene.add(object);
+            }, onProgress, onError );
+        });
+
+        // LUČ
+
+        mtlLoader.setBaseUrl('obj/');
+        mtlLoader.setPath('obj/');
+        mtlLoader.load( 'luc1.mtl', function( materials ) {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials( materials );
+            objLoader.setPath( 'obj/' );
+            objLoader.load('luc1.obj', function ( object ) {
+                object.position.set(0, -370, 0);
+                object.scale.x = 1;
+                object.scale.y = 1;
+                object.scale.z = 1;
+                //object.rotation.x = -Math.PI;
+                object.rotation.y = - Math.PI / 2;
+                scene.add(object);
+            }, onProgress, onError );
+        });
+
+// NIMAM POJMA KA JE TO
+
+        var objR;
+
+        mtlLoader.setBaseUrl('obj/');
+        mtlLoader.setPath('obj/');
+        mtlLoader.load( 'lightswitchR.mtl', function( materials ) {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials( materials );
+            objLoader.setPath( 'obj/' );
+            objLoader.load('lightswitchR.obj', function ( object ) {
+                object.position.set(-620, -812, -1540);
+                object.scale.x = 1;
+                object.scale.y = 1;
+                object.scale.z = 1;
+                objR = object;
+                //object.rotation.x = -Math.PI/2;
+                //object.rotation.y =  Math.PI/4;
+                object.children[0].name = "steker_rdec";
+                object.name="rdec_steker";
+                scene.add(object);
+            }, onProgress, onError );
+        });
+        // RDEČ GUMB
+        var light5 = new THREE.PointLight( 0xffffff, 10, 0.1, 0.5 );
+        light5.position.set(-620, -800, -1527);
+        light5.add( objR );
+        light5.name="rdeca_luc";
+        scene.add( light5 );
+
+        var objG;
+        // ZELEN
+        mtlLoader.setBaseUrl('obj/');
+        mtlLoader.setPath('obj/');
+        mtlLoader.load( 'lightswitchG.mtl', function( materials ) {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials( materials );
+            objLoader.setPath( 'obj/' );
+            objLoader.load('lightswitchG.obj', function ( object ) {
+                object.position.set(-620, -812, -1500);
+                object.scale.x = 1;
+                object.scale.y = 1;
+                object.scale.z = 1;
+                objG = object;
+                //object.rotation.x = -Math.PI/2;
+                //object.rotation.y =  Math.PI/4;
+                object.children[0].name = "steker_zelen";
+                object.name="zelen_steker";
+                scene.add(object);
+            }, onProgress, onError );
+        });
+
+        var light6 = new THREE.PointLight( 0xffffff, 10,0.1, 0.5 );
+        light6.position.set(-620, -800, -1487);
+        light6.add( objG );
+        light6.name="zelena_luc";
+        scene.add( light6 );
+
+        var objB;
+// PLAV
+        mtlLoader.setBaseUrl('obj/');
+        mtlLoader.setPath('obj/');
+        mtlLoader.load( 'lightswitchB.mtl', function( materials ) {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials( materials );
+            objLoader.setPath( 'obj/' );
+            objLoader.load('lightswitchB.obj', function ( object ) {
+                object.position.set(-620, -812, -1460);
+                object.scale.x = 1;
+                object.scale.y = 1;
+                object.scale.z = 1;
+                objB = object;
+                //object.rotation.x = -Math.PI/2;
+                //object.rotation.y =  Math.PI/4;
+                object.children[0].name = "steker_modr";
+                object.name="modr_steker";
+                scene.add(object);
+            }, onProgress, onError );
+        });
+
+        var light7 = new THREE.PointLight( 0xffffff, 10, 0.1, 0.5 );
+        light7.position.set(-620, -800, -1447);
+        light7.add( objB );
+        light7.name="modra_luc";
+        scene.add( light7 );
+
+
+        walls = new THREE.Object3D();
+
+
+        //var groundMat = new THREE.MeshPhongMaterial({ambient:0xffff00, color:0xff33ff, specular: 0x000011});
+        //var groundMat = new THREE.MeshPhongMaterial({ambient:0xffff00, color:0xff33ff, specular: 0x000011});
+        var groundGeo = new THREE.PlaneGeometry(wallWidth * 2, wallWidth);
+        var wallGeo = new THREE.PlaneGeometry(wallWidth, wallWidth);
+        var hodnikSize = new THREE.PlaneGeometry(wallWidth / 2, wallWidth / 2);
+        var wallSize = new THREE.PlaneGeometry(wallWidth -250, wallWidth);
+        var wallSizeTop = new THREE.PlaneGeometry(wallWidth / 2, wallWidth);
+
+
+        var texturePlatno = new THREE.TextureLoader().load('wall_platno.jpg');
+        var platno_p = new THREE.MeshLambertMaterial( { map: texturePlatno } );
+
+
+        var texture1 = new THREE.TextureLoader().load( 'cellar.jpg' );
+        var wallTexture = new THREE.MeshLambertMaterial( { map: texture1 } );
+
+        var texture1_2 = new THREE.TextureLoader().load( 'wall.jpg' );
+        var wallTexture2 = new THREE.MeshLambertMaterial( { map: texture1_2 } );
+
+        var texture2 = new THREE.TextureLoader().load( 'floor.jpg' );
+        var floorTexture = new THREE.MeshLambertMaterial( { map: texture2 } );
+
+        var texture3 = new THREE.TextureLoader().load( '5921.jpg' );
+        var ceilingTexture = new THREE.MeshLambertMaterial( { map: texture3 } );
+
+        var ground = new THREE.Mesh(groundGeo, floorTexture);
+        ground.overdraw = true;
+        ground.position.set(0, -wallWidth, 0);
+        ground.rotation.x = -Math.PI/2;
+        walls.add(ground);
+
+        var wallleft = new THREE.Mesh(wallGeo, wallTexture)
+        wallleft.overdraw = true;
+        wallleft.position.set(-wallWidth, -wallWidth/2, 0);
+        wallleft.position.set(-wallWidth, -wallWidth/2, 0);
+        wallleft.rotation.y = Math.PI/2;
+        walls.add(wallleft);
+
+        var ceiling = new THREE.Mesh(groundGeo, ceilingTexture);
+        ceiling.position.set(0, 0, 0);
+        ceiling.rotation.x = Math.PI/2;
+        walls.add(ceiling);
+
+        var ground = new THREE.Mesh(groundGeo, floorTexture);
+        ground.overdraw = true;
+        ground.position.set(0, -wallWidth, -1500);
+        ground.rotation.x = -Math.PI/2;
+        walls.add(ground);
+
+        var hodnik = new THREE.Mesh(hodnikSize, floorTexture);
+        hodnik.overdraw = true;
+        hodnik.position.set(0, -wallWidth, -750);
+        hodnik.rotation.x = -Math.PI/2;
+        walls.add(hodnik);
+
+        var ground = new THREE.Mesh(groundGeo, floorTexture);
+        ground.overdraw = true;
+        ground.position.set(0, -wallWidth, -3000);
+        ground.rotation.x = -Math.PI/2;
+        walls.add(ground);
+
+        var hodnik = new THREE.Mesh(hodnikSize, floorTexture);
+        hodnik.overdraw = true;
+        hodnik.position.set(0, -wallWidth, -2250);
+        hodnik.rotation.x = -Math.PI/2;
+        walls.add(hodnik);
+
+        var textureZvezde = new THREE.TextureLoader().load('stars.png');
+        var zvezde = new THREE.MeshLambertMaterial( { map: textureZvezde } );
+        var stars = new THREE.PlaneGeometry(3000, 3000);
+
+        //ZVEZDE
+        var wallfront = new THREE.Mesh(stars, zvezde);
+        wallfront.overdraw = true;
+        wallfront.position.set(0, -1000, -4000);
+        walls.add(wallfront);
+
+        var wallback = new THREE.Mesh(wallSizeTop, wallTexture);
+        wallback.overdraw = true;
+        wallback.position.set(250, -wallWidth/2, -wallWidth/2 - 250);
+        wallback.rotation.y = -Math.PI/2;
+        walls.add(wallback);
+
+        var wallback = new THREE.Mesh(wallSizeTop, wallTexture);
+        wallback.overdraw = true;
+        wallback.position.set(-250, -wallWidth/2, -wallWidth/2 - 250);
+        wallback.rotation.y = Math.PI/2;
+        walls.add(wallback);
+
+        var wallback = new THREE.Mesh(wallSizeTop, wallTexture);
+        wallback.overdraw = true;
+        wallback.position.set(250, -wallWidth/2, -wallWidth/2 - 1750);
+        wallback.rotation.y = -Math.PI/2;
+        walls.add(wallback);
+
+        var wallback = new THREE.Mesh(wallSizeTop, wallTexture);
+        wallback.overdraw = true;
+        wallback.position.set(-250, -wallWidth/2, -wallWidth/2 - 1750);
+        wallback.rotation.y = Math.PI/2;
+        walls.add(wallback);
+//DO TU
+
+
+        var wallleft = new THREE.Mesh(wallGeo, wallTexture2);
+        wallleft.overdraw = true;
+        wallleft.position.set(-wallWidth, -wallWidth/2, -1500);
+        wallleft.rotation.y = Math.PI/2;
+        walls.add(wallleft);
+
+        var wallleft = new THREE.Mesh(wallGeo, wallTexture);
+        wallleft.overdraw = true;
+        wallleft.position.set(-wallWidth, -wallWidth/2, -3000);
+        wallleft.rotation.y = Math.PI/2;
+        walls.add(wallleft);
+
+        var wallright = new THREE.Mesh(wallGeo, wallTexture);
+        wallright.overdraw = true;
+        wallright.position.set(wallWidth, -wallWidth/2, 0);
+        wallright.rotation.y = -Math.PI/2;
+        walls.add(wallright);
+
+        var wallright = new THREE.Mesh(wallGeo, platno_p);
+        wallright.overdraw = true;
+        wallright.position.set(wallWidth, -wallWidth/2, -1500);
+        wallright.rotation.y = -Math.PI/2;
+        walls.add(wallright);
+
+        var wallright = new THREE.Mesh(wallGeo, wallTexture);
+        wallright.overdraw = true;
+        wallright.position.set(wallWidth, -wallWidth/2, -3000);
+        wallright.rotation.y = -Math.PI/2;
+        walls.add(wallright);
+
+        var wallback = new THREE.Mesh(wallSize, wallTexture);
+        wallback.overdraw = true;
+        wallback.position.set(-625, -wallWidth/2, -wallWidth/2);
+        walls.add(wallback);
+
+        var wallback = new THREE.Mesh(wallSize, wallTexture);
+        wallback.overdraw = true;
+        wallback.position.set(625, -wallWidth/2, -wallWidth/2);
+        walls.add(wallback);
+
+        var wallback = new THREE.Mesh(wallSizeTop, wallTexture);
+        wallback.overdraw = true;
+        wallback.position.set(0, -wallWidth/2, -wallWidth/2);
+        wallback.name="VRATA";
+        walls.add(wallback);
+
+        var wallfront = new THREE.Mesh(groundGeo, wallTexture);
+        wallfront.overdraw = true;
+        wallfront.position.set(0, -wallWidth/2, wallWidth/2);
+        wallfront.rotation.y = -Math.PI;
+        walls.add(wallfront);
+
+        var ceiling = new THREE.Mesh(groundGeo, ceilingTexture);
+        ceiling.position.set(0, 0, 0);
+        ceiling.rotation.x = Math.PI/2;
+        walls.add(ceiling);
+
+        var ceiling = new THREE.Mesh(groundGeo, ceilingTexture);
+        ceiling.position.set(0, 0, -1500);
+        ceiling.rotation.x = Math.PI/2;
+        walls.add(ceiling);
+
+        var ceiling = new THREE.Mesh(groundGeo, ceilingTexture);
+        ceiling.position.set(0, 0, -3000);
+        ceiling.rotation.x = Math.PI/2;
+        walls.add(ceiling);
+
+
+        var wallback = new THREE.Mesh(wallSize, wallTexture2);
+        wallback.overdraw = false;
+        wallback.position.set(-625, -wallWidth/2, -wallWidth/2 - 1500);
+        walls.add(wallback);
+
+        var wallback = new THREE.Mesh(wallSize, wallTexture2);
+        wallback.overdraw = true;
+        wallback.position.set(625, -wallWidth/2, -wallWidth/2 - 1500);
+        walls.add(wallback);
+
+        var wallback = new THREE.Mesh(wallSizeTop, wallTexture2);
+        wallback.overdraw = true;
+        wallback.position.set(0, -wallWidth/2, -wallWidth/2 - 1500);
+        wallback.name="vrata_2_soba";
+        walls.add(wallback);
+
+        var wallback = new THREE.Mesh(wallSize, wallTexture);
+        wallback.overdraw = true;
+        wallback.position.set(-625, -wallWidth/2, -wallWidth/2 - 3000);
+        walls.add(wallback);
+
+        var wallback = new THREE.Mesh(wallSize, wallTexture);
+        wallback.overdraw = true;
+        wallback.position.set(625, -wallWidth/2, -wallWidth/2 - 3000);
+        walls.add(wallback);
+
+       /* var wallback = new THREE.Mesh(wallSizeTop, wallTexture);
+        wallback.overdraw = true;
+        wallback.position.set(0, -wallWidth/2, -wallWidth/2 - 3000);
+        walls.add(wallback);*/
+
+        var wallback = new THREE.Mesh(wallSize, wallTexture2);
+        wallback.overdraw = true;
+        wallback.position.set(-625, -wallWidth/2, -wallWidth/2 - 500);
+        wallback.rotation.y = Math.PI;
+        walls.add(wallback);
+
+        var wallback = new THREE.Mesh(wallSize, wallTexture2);
+        wallback.overdraw = true;
+        wallback.position.set(625, -wallWidth/2, -wallWidth/2 - 500);
+        wallback.rotation.y = Math.PI;
+        walls.add(wallback);
+
+        var wallback = new THREE.Mesh(wallSizeTop, wallTexture2);
+        wallback.overdraw = true;
+        wallback.position.set(0, -wallWidth/2, -wallWidth/2- 500);
+        wallback.rotation.y = Math.PI;
+        walls.add(wallback);
+
+        var wallback = new THREE.Mesh(wallSize, wallTexture);
+        wallback.overdraw = true;
+        wallback.position.set(-625, -wallWidth/2, -wallWidth/2 - 2000);
+        wallback.rotation.y = Math.PI;
+        walls.add(wallback);
+
+        var wallback = new THREE.Mesh(wallSize, wallTexture);
+        wallback.overdraw = true;
+        wallback.position.set(625, -wallWidth/2, -wallWidth/2 - 2000);
+        wallback.rotation.y = Math.PI;
+        walls.add(wallback);
+
+        var wallback = new THREE.Mesh(wallSizeTop, wallTexture);
+        wallback.overdraw = true;
+        wallback.position.set(0, -wallWidth/2, -wallWidth/2 - 2000);
+        wallback.rotation.y = Math.PI;
+        walls.add(wallback);
+
+        scene.add(walls);
+
+        var listener = new THREE.AudioListener();
+        camera.add( listener );
+
+        // create a global audio source
+        var sound = new THREE.Audio( listener );
+
+        var audioLoader = new THREE.AudioLoader();
+
+//Load a sound and set it as the Audio object's buffer
+        audioLoader.load( 'Haunted.mp3', function( buffer ) {
+            sound.setBuffer( buffer );
+            sound.setLoop(true);
+            sound.setVolume(0.5);
+            sound.name="back";
+            sound.play();
+        });
+
+        var text3 = document.createElement('div');
+        text3.id="text_count";
+        text3.style.position = 'absolute';
+        text3.style.width = 100;
+        text3.style.height = 100;
+        text3.innerHTML = "ČAS: ";
+        text3.style.top = 50 + 'px';
+        text3.style.left = 100 + 'px';
+        text3.style.fontSize="15px";
+        document.body.appendChild(text3);
+
+        var text2 = document.createElement('div');
+        text2.id="text";
+        text2.style.position = 'absolute';
+        text2.style.width = 100;
+        text2.style.height = 100;
+        text2.innerHTML = "(H) -> Pomoč" + "<br />" + "<br />" +"INVENTORI:";
+        text2.style.top = 50 + 'px';
+        text2.style.right = 100 + 'px';
+        text2.style.fontSize="15px";
+        document.body.appendChild(text2);
+
+        box(-849, -849, -175, 1,1, "box_texture.jpg","");
+        box(-849, -849, 150, 2,1,"box_texture.jpg","skatla");
+        box(-849, -849, 475, 3,1,"box_texture.jpg","");
+
+        function printTime(timeSecond) {
+            if(!camControls.freeze){
+                if(Math.round(timeSecond + thisTime)>=60){
+                    clock.stop();
+                    min++;
+                }
+                if(min>=10){
+                    if(Math.round(timeSecond + thisTime)>=10){
+                        text3.innerHTML = "ČAS: " + "0:" + min + ":" + Math.round(timeSecond + thisTime);
+                    }else{
+                        text3.innerHTML = "ČAS: " + "0:" + min + ":0" + Math.round(timeSecond + thisTime);
+                    }
+
+                }else {
+                    if(Math.round(timeSecond + thisTime)>=10){
+                        text3.innerHTML = "ČAS: " + "0:0" + min + ":" + Math.round(timeSecond + thisTime);
+                    }else{
+                        text3.innerHTML = "ČAS: " + "0:0" + min + ":0" + Math.round(timeSecond + thisTime);
+                    }
+
+                }
+            }
+            else{
+                if(!clock.running){
+                    thisTime = timeSecond;
+                    clock.stop();
+                }
+            }
+
+        }
+
+        renderer = new THREE.WebGLRenderer();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        container.appendChild( renderer.domElement );
+
+        document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+        window.addEventListener( 'resize', onWindowResize, false );
+
+        clock = new THREE.Clock();
+        var thisTime = 0;
+
+        dodaj_axe(5000, 5000, 5000, "help_axe1");
+        dodaj_axe(5000, 5000, 5000,"help_axe2");
+        dodaj_axe(5000, 5000, 5000,"help_axe3");
+        box(825, -849, 160, "vlka_skatla",2, "1.jpg", "big");
+        camera.name="kamera";
+        scene.add(camera);
+
+
+        render();
+
+        function render() {
+            if(stek_m){
+                var selectedModraLuc = scene.getObjectByName("modra_luc");
+                selectedModraLuc.distance=15;
+                modra=1;
+            }else{
+                var selectedModraLuc = scene.getObjectByName("modra_luc");
+                selectedModraLuc.distance=0.1;
+                modra=0;
+            }
+
+            if(stek_r){
+                var selectedRdecaLuc = scene.getObjectByName("rdeca_luc");
+                selectedRdecaLuc.distance=15;
+                rdeca=3;
+            }else{
+                var selectedRdecaLuc = scene.getObjectByName("rdeca_luc");
+                selectedRdecaLuc.distance=0.1;
+                rdeca=0;
+            }
+
+            if(stek_z){
+                var selectedZelenaLuc = scene.getObjectByName("zelena_luc");
+                selectedZelenaLuc.distance=15;
+                zelena=7;
+            }else{
+                var selectedZelenaLuc = scene.getObjectByName("zelena_luc");
+                selectedZelenaLuc.distance=0.1;
+                zelena=0;
+            }
+
+            if(steker){
+                var selectedLuc = scene.getObjectByName("luc_v_prvi_sobi");
+                var sek = scene.getObjectByName("sek_na_tl");
+                selectedLuc.distance=1250;
+                sek.position.set(-200, -980, 300);
+                steker=false;
+            }
+
+            if(platno){
+                platno=false;
+                luc_na_platno();
+            }
+
+            if(clickE && axe_pobrano && dist()){
+                clickE = false;
+                axe_action();
+                click_dol=null;
+            }else{
+                clickE = false;
+            }
+            if(axe_inv){
+                var selectedObject = scene.getObjectByName("sek_na_tl");
+                selectedObject.position.set(5000,5000,5000);
+                axe_inv=false;
+            }
+
+            if(clickHelp){
+                help_axe();
+            }
+
+            if(key_pobrano){
+                pober_key();
+                clickKey=true;
+                key_pobrano=false;
+            }
+
+            if(clickKey && dist2() && click_on_bigBox){
+                trol();
+                click_on_bigBox = false;
+            }
+
+            if(dvig_vrat){
+                dvign_vrata();
+            }
+
+            if(end){
+                if(dvign_vrata2){
+                    dvign_vrata2()
+                }
+                var selectedKamera = scene.getObjectByName("kamera");
+                if(selectedKamera.position.z < -2510){
+                    camControls.freeze = true;
+                    text4.innerHTML="ČESTITAMO POBEGNILI STE!"
+
+                }
+            }
+
+            //axe_action(object);
+            var delta = clock.getDelta();
+            camControls.update(delta);
+            camera.position.y = -700;
+            renderer.clear();
+            printTime(clock.elapsedTime);
+            // render using requestAnimationFrame
+            requestAnimationFrame(render);
+            renderer.render(scene, camera)
+        }
+    }
+
+    function luc_na_platno(){
+        var sphere = new THREE.SphereGeometry( 5, 32, 32 );
+        var selectedLuc = scene.getObjectByName("spotligt");
+        var una_mala = scene.getObjectByName("una_mala");
+        una_mala.remove(una_mala.children[0]);
+        var sum=modra+rdeca+zelena;
+        switch(sum) {
+            case 1:
+                selectedLuc.color.b=1;
+                selectedLuc.color.g=0;
+                selectedLuc.color.r=0;
+                una_mala.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0x0000ff } ) ) );
+                break;
+            case 3:
+                selectedLuc.color.b=0;
+                selectedLuc.color.g=0;
+                selectedLuc.color.r=1;
+                una_mala.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xff0000 } ) ) );
+                break;
+            case 7:
+                selectedLuc.color.b=0;
+                selectedLuc.color.g=1;
+                selectedLuc.color.r=0;
+                una_mala.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0x00ff00 } ) ) );
+
+                break;
+            case 8:
+                selectedLuc.color.b=1;
+                selectedLuc.color.g=1;
+                selectedLuc.color.r=0;
+                una_mala.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0x00ffff } ) ) );
+                break;
+            case 4:
+                selectedLuc.color.b=1;
+                selectedLuc.color.g=0;
+                selectedLuc.color.r=1;
+                una_mala.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xff00ff } ) ) );
+                break;
+            case 10:
+                selectedLuc.color.b=0;
+                selectedLuc.color.g=1;
+                selectedLuc.color.r=1;
+                una_mala.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffff00 } ) ) );
+                end=true;
+                break;
+            default:
+                selectedLuc.color.b=1;
+                selectedLuc.color.g=1;
+                selectedLuc.color.r=1;
+                una_mala.add( new THREE.Mesh( sphere, new THREE.MeshBasicMaterial( { color: 0xffffff } ) ) );
+
+        }
+    }
+    
+    function trol() {
+
+        //Create an AudioListener and add it to the camera
+        var listener = new THREE.AudioListener();
+        camera.add( listener );
+
+// create a global audio source
+        var sound = new THREE.Audio( listener );
+
+        var audioLoader = new THREE.AudioLoader();
+
+//Load a sound and set it as the Audio object's buffer
+        audioLoader.load( 'evil.mp3', function( buffer ) {
+            sound.setBuffer( buffer );
+            sound.setLoop(false);
+            sound.setVolume(1);
+            sound.play();
+        });
+
+        make_troll_face();
+    }
+
+    function make_troll_face() {
+        var selectedObject = scene.getObjectByName("big");
+        scene.remove( selectedObject );
+        var onProgress = function ( xhr ) {
+            if ( xhr.lengthComputable ) {
+                var percentComplete = xhr.loaded / xhr.total * 100;
+                console.log( Math.round(percentComplete, 2) + '% downloaded' );
+            }
+        };
+
+        var onError = function ( xhr ) { };
+
+        THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+
+        var mtlLoader = new THREE.MTLLoader();
+        mtlLoader.setBaseUrl('axe-obj/');
+        mtlLoader.setPath('axe-obj/');
+        mtlLoader.load( 'trol.mtl', function( materials ) {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials( materials );
+            objLoader.setPath( 'axe-obj/' );
+            objLoader.load('trol.obj', function ( object ) {
+                object.position.set(600, -500, 80);
+                object.scale.x = 10;
+                object.scale.y = 10;
+                object.scale.z = 10;
+                object.rotation.x = -Math.PI /2;
+               // object.rotation.y = Math.PI / 4;
+                object.rotation.z = -Math.PI / 2;
+                object.name="trol";
+                scene.add(object);
+            }, onProgress, onError );
+        });
+    }
+
+    function dist2() {
+        if(click_dol_key < 600){
+            return true;
+        }
+    }
+
+    function pober_key() {
+        var selectedObject = scene.getObjectByName("kluc");
+        scene.remove( selectedObject );
+    }
+
+    function dist() {
+        if(click_dol < 600){
+            return true;
+        }
+    }
+
+    function dodaj_axe(x,y,z,id) {
+        var onProgress = function ( xhr ) {
+            if ( xhr.lengthComputable ) {
+                var percentComplete = xhr.loaded / xhr.total * 100;
+                console.log( Math.round(percentComplete, 2) + '% downloaded' );
+            }
+        };
+
+        var onError = function ( xhr ) { };
+
+        THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+
+        var mtlLoader = new THREE.MTLLoader();
+        mtlLoader.setBaseUrl('axe-obj/');
+        mtlLoader.setPath('axe-obj/');
+        mtlLoader.load( 'Axe.mtl', function( materials ) {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials( materials );
+            objLoader.setPath( 'axe-obj/' );
+            objLoader.load('Axe.obj', function ( object ) {
+                object.position.set(x, y, z);
+                object.scale.x = 30;
+                object.scale.y = 30;
+                object.scale.z = 30;
+                object.rotation.x = 90* Math.PI / 180;
+                object.rotation.y = -90* Math.PI / 180;
+                object.name=id;
+                scene.add(object);
+            }, onProgress, onError );
+        });
+    }
+
+    function help_axe() {
+
+        var selectedObject1 = scene.getObjectByName("help_axe1");
+        var selectedObject2 = scene.getObjectByName("help_axe2");
+        var selectedObject3 = scene.getObjectByName("help_axe3");
+
+        selectedObject1.position.set(axe_st_h, axe_st3_h, 0);
+        selectedObject1.rotation.y =axe_st2_h* Math.PI / 180;
+
+        selectedObject2.position.set(axe_st_h, axe_st3_h, 300);
+        selectedObject2.rotation.y =axe_st2_h* Math.PI / 180;
+
+        selectedObject3.position.set(axe_st_h, axe_st3_h, -350);
+        selectedObject3.rotation.y =axe_st2_h* Math.PI / 180;
+        axe_st_h -= 110;
+        axe_st2_h += 10;
+        axe_st3_h += 65.5;
+
+        if(axe_st_h > -699){
+            clickHelp=true;
+        }else{
+                    setTimeout(function(){ scene.remove(selectedObject1);
+                        scene.remove(selectedObject2), scene.remove(selectedObject3);
+                    }, 100);
+                    axe_st_h=300;
+                    axe_st2_h=-90;
+                    axe_st3_h=-530;
+                    clickHelp=false;
+                }
+    }
+    
+    function nared_axe(x,y,z) {
+        THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+
+        var mtlLoader = new THREE.MTLLoader();
+        mtlLoader.setBaseUrl('axe-obj/');
+        mtlLoader.setPath('axe-obj/');
+        mtlLoader.load( 'Axe.mtl', function( materials ) {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials( materials );
+            objLoader.setPath( 'axe-obj/' );
+            objLoader.load('Axe.obj', function ( object ) {
+                object.position.set(x, y, z);
+                object.scale.x = 30;
+                object.scale.y = 30;
+                object.scale.z = 30;
+                object.rotation.x = Math.PI;
+                object.rotation.y = Math.PI / 4;
+                object.children[0].name="sekira_v_rokah";
+                object.children[1].name="sekira_v_rokah";
+                object.name="sek_v_rok";
+                scene.add(object);
+            }, onProgress, onError );
+        });
+    }
+
+    function axe_action(){
+        var selectedSkatla = scene.getObjectByName("skatla");
+        var selectedObject = scene.getObjectByName("sek_na_tl");
+        selectedObject.position.set(axe_st, axe_st3, 0);
+        selectedObject.rotation.x = 90* Math.PI / 180;
+        selectedObject.rotation.y =axe_st2* Math.PI / 180;
+        axe_st -= 110;
+        axe_st2 += 10;
+        axe_st3 += 65.5;
+
+        if(axe_st > -699){
+            clickE=true;
+        }else{
+            setTimeout(function(){ scene.remove( selectedObject );
+                scene.remove( selectedSkatla );drawKey(); dvig_vrat=true; add_text("ODKLENI SKRINIJO IN VZAMI NAGRADO!" + "<br />" + "NATO POJDI SKOZI VRATA V DRUGO SOBO.");
+
+            }, 500);
+            clickE=false;
+
+        }
+
+    }
+
+    function add_text(tekst) {
+        var text3 = document.getElementById("info");
+        text3.style.fontSize="40px";
+        text3.style.top = 150 + 'px';
+        text3.innerHTML=tekst;
+        setTimeout(function(){ text3.innerHTML="" }, 4000);
+    }
+
+    function dvign_vrata() {
+        var selectedObject = scene.getObjectByName("VRATA");
+        selectedObject.position.y=vrata_pos;
+        vrata_pos++;
+
+        if(vrata_pos >=150){
+            text.innerHTML += "<br />" +  "Namig: 0.17 1.00 0.50";
+            dvig_vrat=false;
+        }
+    }
+
+    function dvign_vrata2() {
+        var selectedObject = scene.getObjectByName("vrata_2_soba");
+        selectedObject.position.y=vrata_pos2;
+        vrata_pos2++;
+
+        if(vrata_pos >=150){
+            dvig_vrat2=false;
+        }
+    }
+    
+    function drawKey() {
+        var onProgress = function ( xhr ) {
+            if ( xhr.lengthComputable ) {
+                var percentComplete = xhr.loaded / xhr.total * 100;
+                console.log( Math.round(percentComplete, 2) + '% downloaded' );
+            }
+        };
+
+        var onError = function ( xhr ) { };
+
+        THREE.Loader.Handlers.add( /\.dds$/i, new THREE.DDSLoader() );
+
+        var mtlLoader = new THREE.MTLLoader();
+        mtlLoader.setBaseUrl('axe-obj/');
+        mtlLoader.setPath('axe-obj/');
+        mtlLoader.load( 'Worn_Key.mtl', function( materials ) {
+            materials.preload();
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials( materials );
+            objLoader.setPath( 'axe-obj/' );
+            objLoader.load('Worn_Key.obj', function ( object ) {
+                object.position.set(-800, -800, 0);
+                object.scale.x = 2;
+                object.scale.y = 2;
+                object.scale.z = 2;
+                object.rotation.x = 0.5*Math.PI;
+                object.rotation.y = Math.PI / 4;
+                object.name="kluc";
+                scene.add(object);
+            }, onProgress, onError );
+        });
+    }
+
+    function bigBox(x, y, z,id) {
+        this.boxes = [];
+        this.id = id;
+        var boxGeo = new THREE.PlaneGeometry(500, 300);
+        var boxGeo2 = new THREE.PlaneGeometry(500, 500);
+        this.boxes = new THREE.Object3D();
+
+        var boxTexture = new THREE.MeshBasicMaterial({
+            map:THREE.ImageUtils.loadTexture('box_texture.jpg')
+        });
+        boxTexture.map.needsUpdate = true;
+
+        //NEAR
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x-100, y, z+100);
+        boxA.name = id;
+        this.boxes.add(boxA);
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x-100, y, z+100);
+        boxA.rotation.y = -Math.PI;
+        boxA.name = id;
+        this.boxes.add(boxA);
+
+
+        //FARSIDE
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x-100, y, z-400);
+        boxA.rotation.y = -Math.PI;
+        boxA.name = id;
+        this.boxes.add(boxA);
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x-100, y, z-400);
+        boxA.name = id;
+        this.boxes.add(boxA);
+
+        //LEFT
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x-350, y, z-150);
+        boxA.rotation.y = -Math.PI/2;
+        boxA.name = id;
+        this.boxes.add(boxA);
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x-350, y, z-150);
+        boxA.rotation.y = Math.PI/2;
+        boxA.name = id;
+        this.boxes.add(boxA);
+
+        //TOP
+        var boxA = new THREE.Mesh(boxGeo2, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x-100, y+150, z-150);
+        boxA.rotation.x = -Math.PI/2;
+        boxA.name = id;
+        this.boxes.add(boxA);
+        var boxA = new THREE.Mesh(boxGeo2, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x-100, y+150, z-150);
+        boxA.rotation.x = Math.PI/2;
+        boxA.name = id;
+        this.boxes.add(boxA);
+
+        //BOTTOM
+        var boxA = new THREE.Mesh(boxGeo2, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x-100, y-150, z-150);
+        boxA.rotation.x = -Math.PI/2;
+        boxA.name = id;
+        this.boxes.add(boxA);
+
+        //RIGHT
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x+150, y, z-150);
+        boxA.rotation.y = Math.PI/2;
+        boxA.name = id;
+        this.boxes.add(boxA);
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x+150, y, z-150);
+        boxA.rotation.y = -Math.PI/2;
+        boxA.name = id;
+        this.boxes.add(boxA);
+
+        scene.add(this.boxes);
+    }
+
+    function box(x, y, z,id, scale, slika, id_p) {
+        this.boxes = [];
+        this.id = id;
+        var boxGeo = new THREE.PlaneGeometry(300, 300);
+        this.boxes = new THREE.Object3D();
+
+        var boxTexture = new THREE.MeshBasicMaterial({
+            map:THREE.ImageUtils.loadTexture(slika)
+        });
+        boxTexture.map.needsUpdate = true;
+
+        //NEAR
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x, y, z);
+        boxA.name = id;
+        this.boxes.add(boxA);
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x, y, z);
+        boxA.rotation.y = -Math.PI;
+        boxA.name = id;
+        this.boxes.add(boxA);
+
+
+        //FARSIDE
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x, y, z-300);
+        boxA.rotation.y = -Math.PI;
+        boxA.name = id;
+        this.boxes.add(boxA);
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x, y, z-300);
+        boxA.name = id;
+        this.boxes.add(boxA);
+
+        //LEFT
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x-150, y, z-150);
+        boxA.rotation.y = -Math.PI/2;
+        boxA.name = id;
+        this.boxes.add(boxA);
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x-150, y, z-150);
+        boxA.rotation.y = Math.PI/2;
+        boxA.name = id;
+        this.boxes.add(boxA);
+
+        //TOP
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x, y+150, z-150);
+        boxA.rotation.x = -Math.PI/2;
+        boxA.name = id;
+        this.boxes.add(boxA);
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x, y+150, z-150);
+        boxA.rotation.x = Math.PI/2;
+        boxA.name = id;
+        this.boxes.add(boxA);
+
+        //BOTTOM
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x, y-150, z-150);
+        boxA.rotation.x = -Math.PI/2;
+        boxA.name = id;
+        this.boxes.add(boxA);
+
+        //RIGHT
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x+150, y, z-150);
+        boxA.rotation.y = Math.PI/2;
+        boxA.name = id;
+        this.boxes.add(boxA);
+        var boxA = new THREE.Mesh(boxGeo, boxTexture);
+        boxA.overdraw = true;
+        boxA.position.set(x+150, y, z-150);
+        boxA.rotation.y = -Math.PI/2;
+        boxA.name = id;
+        this.boxes.add(boxA);
+        this.boxes.scale.z=scale;
+        this.boxes.name=id_p;
+        scene.add(this.boxes);
+    }
+
+    function onWindowResize() {
+        windowHalfX = window.innerWidth / 2;
+        windowHalfY = window.innerHeight / 2;
+
+
+
+        renderer.setSize( window.innerWidth, window.innerHeight );
+    }
+
+
+    function onDocumentMouseMove( event ) {
+        mouseX = ( event.clientX - windowHalfX ) / 2;
+        mouseY = ( event.clientY - windowHalfY ) / 2;
+
+        mousex2 = -event.clientX;
+        mousey2 = -event.clientY;
+    }
+
+
+</script>
+</body>
+</html>
